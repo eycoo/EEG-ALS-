@@ -1,1 +1,2 @@
-# EEG-ALS
+# EEG-ALS-processing-scripts
+
