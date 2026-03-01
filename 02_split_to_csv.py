@@ -83,26 +83,26 @@ def apply_preprocessing(raw):
                 try:
                     eog_idx, _ = ica.find_bads_eog(raw, ch_name=ch, verbose=False)
                     eog_indices.extend(eog_idx)
-                except:
-                    pass
+                except Exception:
+                    continue
         
-        if not eog_indices:
-            muscle_indices = []
-            for ch in raw.ch_names:
-                ch_lower = ch.lower()
-                if any(x in ch_lower for x in ["t7", "t8", "tp9", "tp10"]):
-                    try:
-                        muscle_idx, _ = ica.find_bads_muscle(raw, verbose=False)
-                        muscle_indices.extend(muscle_idx)
-                    except:
-                        pass
+        muscle_indices = []
+        for ch in raw.ch_names:
+            ch_lower = ch.lower()
+            if any(x in ch_lower for x in ["t7", "t8", "tp9", "tp10"]):
+                try:
+                    muscle_idx, _ = ica.find_bads_muscle(raw, verbose=False)
+                    muscle_indices.extend(muscle_idx)
+                except Exception:
+                    continue
         
-        bad_ica = list(set(eog_indices))
+        # Gabungkan semua artefak yang terdeteksi (EOG dan Muscle) tanpa dibatasi
+        bad_ica = list(set(eog_indices + muscle_indices))
         if bad_ica:
-            ica.exclude = bad_ica[:3]
+            ica.exclude = bad_ica
             raw = ica.apply(raw, verbose=False)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"ICA failed for {raw.filenames}: {e}")
     
     return raw
 
@@ -169,7 +169,8 @@ def process_single_file(edf_path):
             df.to_csv(save_path, index=False)
             saved += 1
             
-        except Exception:
+        except Exception as e:
+            print(f"Segment error in {edf_path.name}: {e}")
             continue
     
     return saved
